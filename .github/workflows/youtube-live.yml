@@ -1,0 +1,84 @@
+name: 24/7 YouTube Live Stream
+
+on:
+  schedule:
+    # Multiple schedules for continuous 24/7 coverage
+    - cron: '0 0 * * *'    # Every day at 00:00 UTC
+    - cron: '0 6 * * *'    # Every day at 06:00 UTC
+    - cron: '0 12 * * *'   # Every day at 12:00 UTC
+    - cron: '0 18 * * *'   # Every day at 18:00 UTC
+  
+  workflow_dispatch:  # Manual trigger
+  
+  push:
+    branches: [ main, master ]
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours (maximum for free tier)
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: 🐍 Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: 📦 Install FFmpeg
+        run: |
+          echo "📦 Installing FFmpeg..."
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          echo "✅ FFmpeg installed!"
+          ffmpeg -version | head -n 1
+      
+      - name: 📚 Install Python Dependencies
+        run: |
+          echo "📚 Installing Python packages..."
+          pip install --upgrade pip
+          pip install requests
+          echo "✅ Dependencies installed!"
+      
+      - name: 💾 Check Disk Space
+        run: |
+          echo "💾 Available disk space:"
+          df -h / | tail -1
+      
+      - name: 🎬 Start 24/7 YouTube Live Stream
+        env:
+          YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          VIDEO_URL: ${{ secrets.VIDEO_URL }}
+          VIDEO_QUALITY: ${{ secrets.VIDEO_QUALITY }}
+          ASPECT_RATIO: ${{ secrets.ASPECT_RATIO }}
+        run: |
+          echo "=================================="
+          echo "🔴 Starting 24/7 LIVE Stream"
+          echo "=================================="
+          echo "⏰ Started at: $(date)"
+          echo "🌍 Server: GitHub Actions"
+          echo "💻 Your PC: Can be OFF!"
+          echo "📡 Stream: Will run for 6 hours"
+          echo "🔄 Auto-restart: Every 6 hours"
+          echo "=================================="
+          python streamer.py
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          rm -f video.mp4
+          echo "✅ Cleanup done"
+      
+      - name: 📊 Stream Summary
+        if: always()
+        run: |
+          echo "=================================="
+          echo "📊 Stream Session Complete"
+          echo "=================================="
+          echo "⏰ Ended at: $(date)"
+          echo "🔄 Next session: Auto-starting soon"
+          echo "✅ Status: Completed"
+          echo "=================================="
